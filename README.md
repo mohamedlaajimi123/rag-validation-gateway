@@ -111,12 +111,14 @@ Verify the availability of the following endpoints inside your cluster environme
 
 ### Direct Execution
 
-To spin up the complete validation pipeline locally, you must execute both the core AI inference node and the API gateway service in separate terminal windows.
+To spin up the complete validation pipeline locally, run the following execution scripts across two separate terminal sessions:
 
-#### Phase 1: Initialize the Python Inference Worker Node
-Open a terminal at the root directory, navigate to your Python directory, configure a virtual environment, install the dependencies, and boot the execution server:
 ```bash
-# Navigate to the inference service directory
+# ==============================================================================
+# PHASE 1: INITIALIZE THE PYTHON INFERENCE WORKER NODE
+# ==============================================================================
+# Open a terminal session at the workspace root directory:
+
 cd python-ai-service
 
 # Initialize and activate an isolated virtual environment
@@ -129,16 +131,18 @@ pip install -r requirements.txt
 # Launch the secure inference server
 python server.py
 
-#### Phase 2: Initialize the NestJS Gateway
-Open a second terminal window at the root directory, navigate to your gateway directory, resolve the node manifests, and spin up the multi-gate execution pipeline:
-```bash
-# Navigate to the gateway API directory
+
+# ==============================================================================
+# PHASE 2: INITIALIZE THE NESTJS GATEWAY
+# ==============================================================================
+# Open a second terminal session at the workspace root directory:
+
 cd nestjs-gateway
 
 # Install package dependencies listed in manifest
 npm install
 
-# Run the complete automated End-to-End integration suite
+# Optional: Run the complete automated End-to-End integration suite
 npm run test:e2e
 
 # Compile codebase and spin up the gateway instance
