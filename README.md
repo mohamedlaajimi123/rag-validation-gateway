@@ -110,7 +110,31 @@ Verify the availability of the following endpoints inside your cluster environme
 - Ollama Engine Server: Port 11434
 
 ### Direct Execution
+
+To spin up the complete validation pipeline locally, you must execute both the core AI inference node and the API gateway service in separate terminal windows.
+
+#### Phase 1: Initialize the Python Inference Worker Node
+Open a terminal at the root directory, navigate to your Python directory, configure a virtual environment, install the dependencies, and boot the execution server:
 ```bash
+# Navigate to the inference service directory
+cd python-ai-service
+
+# Initialize and activate an isolated virtual environment
+python -m venv venv
+source venv/Scripts/activate  # On Linux/macOS use: source venv/bin/activate
+
+# Install required inference and machine learning libraries
+pip install -r requirements.txt
+
+# Launch the secure inference server
+python server.py
+
+#### Phase 2: Initialize the NestJS Gateway
+Open a second terminal window at the root directory, navigate to your gateway directory, resolve the node manifests, and spin up the multi-gate execution pipeline:
+```bash
+# Navigate to the gateway API directory
+cd nestjs-gateway
+
 # Install package dependencies listed in manifest
 npm install
 
