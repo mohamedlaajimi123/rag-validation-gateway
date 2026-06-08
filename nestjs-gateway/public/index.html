@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Self-Correcting RAG Gateway Dashboard</title>
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #131c2e;
+            --bg-sidebar: #0f172a;
+            --border-color: #1e293b;
+            --border-glow: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-hover: #2563eb;
+            
+            --color-lexical: #22c55e;
+            --color-semantic: #0ea5e9;
+            --color-judge: #a855f7;
+            --color-rejected: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 🗂️ SIDEBAR CONTAINER LAYOUT */
+        .sidebar {
+            width: 280px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+
+        .sidebar-top {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .brand {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .sidebar-section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .document-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .document-item {
+            background: #151f32;
+            border: 1px solid var(--border-color);
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .document-item svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--accent-blue);
+            flex-shrink: 0;
+        }
+
+        .empty-inventory {
+            font-size: 12px;
+            color: #475569;
+            font-style: italic;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        /* 🖥️ MAIN WORKSPACE CONTENT WINDOW */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 0%, #152035 0%, var(--bg-main) 70%);
+        }
+
+        .top-navbar {
+            padding: 20px 40px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(11, 15, 25, 0.8);
+            backdrop-filter: blur(12px);
+        }
+
+        h1 { font-size: 20px; margin: 0; color: var(--text-primary); font-weight: 600; }
+        p.subtitle { color: var(--text-secondary); margin: 3px 0 0 0; font-size: 12px; }
+
+        .workspace-viewport {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            box-sizing: border-box;
+        }
+
+        /* 🧬 INGESTION COMPONENT DROPZONE */
+        .upload-zone {
+            background: rgba(19, 28, 46, 0.6);
+            border: 2px dashed #334155;
+            border-radius: 10px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            backdrop-filter: blur(4px);
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--accent-blue);
+            background: rgba(30, 41, 59, 0.8);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
+        }
+        .upload-zone svg { width: 32px; height: 32px; fill: var(--text-secondary); transition: fill 0.2s; }
+        .upload-zone:hover svg { fill: var(--accent-blue); }
+        .upload-zone p { margin: 0; font-size: 14px; color: var(--text-secondary); }
+        .upload-zone .highlight { color: var(--accent-blue); font-weight: 600; }
+        #fileInput { display: none; }
+
+        /* QUERY CONSOLE WRAPPER */
+        .console-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 14px 18px;
+            background-color: #090d16;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+            transition: all 0.2s;
+        }
+        input[type="text"]:focus { border-color: var(--accent-blue); box-shadow: 0 0 10px rgba(59, 130, 246, 0.1); }
+        input[type="text"]:disabled { opacity: 0.4; cursor: not-allowed; background-color: #070a10; }
+
+        button {
+            padding: 14px 28px;
+            background-color: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        button:hover { background-color: var(--accent-hover); transform: translateY(-1px); }
+        button:disabled { background-color: #1e293b; color: #475569; cursor: not-allowed; transform: none; }
+
+        /* ⏳ MULTI-STAGE STEP-BY-STEP SEQUENCER RUNTIME */
+        .sequencer-container {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+            padding: 20px;
+            background: #090d16;
+            border-radius: 8px;
+            border: 1px dashed var(--border-color);
+        }
+        .sequencer-step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            color: #475569;
+            transition: color 0.3s ease;
+        }
+        .sequencer-step.active { color: var(--accent-blue); font-weight: 500; }
+        .sequencer-step.completed { color: #10b981; }
+        .sequencer-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+        .sequencer-step.active .sequencer-icon { border-color: var(--accent-blue); background: var(--accent-blue); color: white; box-shadow: 0 0 8px rgba(59, 130, 246, 0.4); }
+        .sequencer-step.completed .sequencer-icon { border-color: #10b981; background: #10b981; color: white; }
+
+        /* 📋 METRIC OUTPUTS AND CHUNKING ALERTS */
+        .results-box {
+            display: none;
+            margin-top: 25px;
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .metric-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            letter-spacing: 0.03em;
+        }
+
+        .status-passed-lexical { background: rgba(34, 197, 94, 0.1); color: var(--color-lexical); border: 1px solid rgba(34, 197, 94, 0.25); }
+        .status-passed-semantic { background: rgba(14, 165, 233, 0.1); color: var(--color-semantic); border: 1px solid rgba(14, 165, 233, 0.25); }
+        .status-passed-judge { background: rgba(168, 85, 247, 0.1); color: var(--color-judge); border: 1px solid rgba(168, 85, 247, 0.25); }
+        .status-rejected { background: rgba(239, 68, 68, 0.1); color: var(--color-rejected); border: 1px solid rgba(239, 68, 68, 0.3); box-shadow: 0 0 15px rgba(239, 68, 68, 0.05); }
+
+        .response-wrapper {
+            background: #090d16;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .response-text {
+            line-height: 1.7;
+            color: #e2e8f0;
+            white-space: pre-line;
+            font-size: 15px;
+            padding: 24px;
+        }
+        
+        /* Interactive Amber Banner for Intercept States */
+        .status-rejected + .response-wrapper {
+            border-color: rgba(239, 68, 68, 0.2);
+            background: linear-gradient(180deg, #160d12 0%, #090d16 100%);
+        }
+
+        .score-display {
+            font-size: 13px;
+            color: var(--text-secondary);
+            padding: 16px 24px;
+            background: rgba(19, 28, 46, 0.4);
+            border-top: 1px solid var(--border-color);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .system-stamp { font-size: 11px; color: #475569; font-family: monospace; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="sidebar-top">
+        <div class="brand">
+            <svg style="width:20px; height:20px; fill:var(--accent-blue);" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+            RAG SECURITY HUB
+        </div>
+        
+        <div>
+            <div class="sidebar-section-title">Workspace Inventory</div>
+            <div class="document-list" id="documentInventory">
+                <div class="empty-inventory" id="emptyInventory">No documents active in dynamic workspace space.</div>
+            </div>
+        </div>
+    </div>
+    
+    <div style="font-size: 11px; color: #334155; text-align: center; border-top: 1px solid var(--border-color); padding-top: 15px;">
+        Pipeline Gateway Tier • v2.1.0
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="top-navbar">
+        <div>
+            <h1>🔒 Enterprise Self-Correcting RAG Gateway</h1>
+            <p class="subtitle">Multi-Tenant Knowledge Mapping System via Microsoft MarkItDown Conversion Layer</p>
+        </div>
+    </div>
+
+    <div class="workspace-viewport">
+        <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <svg viewBox="0 0 24 24">
+                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+            </svg>
+            <div>
+                <p id="uploadPrompt">Drag & drop your core technical documentation here or <span class="highlight">browse local files</span></p>
+                <p style="font-size:12px; color:#475569; margin-top: 4px;">Supports high-entropy layout parsing of PDF, DOCX, XLSX, and PPTX structures</p>
+            </div>
+            <input type="file" id="fileInput" accept=".pdf,.docx,.xlsx,.pptx" onchange="handleFileSelection(event)">
+        </div>
+
+        <div class="console-card">
+            <div class="input-group">
+                <input type="text" id="questionInput" placeholder="Upload a source file above to unlock contextual query pipelines..." disabled>
+                <button id="submitBtn" onclick="submitQuery()" disabled>Query Pipeline</button>
+            </div>
+
+            <div class="sequencer-container" id="sequencerContainer">
+                <div class="sequencer-step" id="step-vector">
+                    <div class="sequencer-icon">1</div> Vectorizing user query layout patterns via dense all-minilm embeddings...
+                </div>
+                <div class="sequencer-step" id="step-qdrant">
+                    <div class="sequencer-icon">2</div> Querying Qdrant spatial indices for source semantic context fragments...
+                </div>
+                <div class="sequencer-step" id="step-inference">
+                    <div class="sequencer-icon">3</div> Executing isolated inference execution pipeline inside downstream compute node...
+                </div>
+                <div class="sequencer-step" id="step-guardrail">
+                    <div class="sequencer-icon">4</div> Evaluating lexical overlap thresholds and fallback similarity vectors...
+                </div>
+            </div>
+
+            <div id="resultsBox" class="results-box">
+                <div id="statusBadge" class="metric-badge"></div>
+                <div class="response-wrapper">
+                    <div class="response-text" id="answerBody"></div>
+                    <div class="score-display">
+                        <span id="scoreBody"></span>
+                        <span class="system-stamp" id="systemStamp"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const HOST_GW = "http://localhost:3001"; 
+    let activeDocumentsPool = new Set();
+
+    // 📡 ACTIVE DOCUMENT LAYOUT BUILDER APPEND HANDLER
+    function appendDocumentToInventory(filename, chunkCount) {
+        const inventoryContainer = document.getElementById('documentInventory');
+        const emptyState = document.getElementById('emptyInventory');
+        
+        if (emptyState) emptyState.remove();
+
+        if (activeDocumentsPool.has(filename)) return;
+        activeDocumentsPool.add(filename);
+
+        const docElement = document.createElement('div');
+        docElement.className = 'document-item';
+        docElement.title = `${filename} (${chunkCount} Active Vector Nodes)`;
+        docElement.innerHTML = `
+            <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            <span>${filename}</span>
+        `;
+        inventoryContainer.appendChild(docElement);
+    }
+
+    // 📥 FILE OVER-THE-WIRE SHIPMENT MANAGER
+    async function uploadDocument(file) {
+        const uploadPrompt = document.getElementById('uploadPrompt');
+        const questionInput = document.getElementById('questionInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const dropZone = document.getElementById('dropZone');
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        uploadPrompt.innerHTML = `🔄 <span style="color:var(--accent-blue)"><strong>Extracting layout matrices via Microsoft MarkItDown Layer...</strong></span>`;
+        dropZone.style.pointerEvents = 'none';
+        dropZone.style.opacity = '0.7';
+
+        try {
+            const response = await fetch(`${HOST_GW}/api/rag/upload`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) throw new Error(`Ingestion system fault. HTTP code: ${response.status}`);
+            const result = await response.json();
+
+            // Track item append array matrix inside sidebar
+            appendDocumentToInventory(file.name, result.totalChunks || 0);
+
+            uploadPrompt.innerHTML = `✨ <strong>Workspace Updated: ${file.name}</strong> <span style="color:#10b981">(${result.totalChunks || 0} Chunks Contextualized)</span>`;
+            questionInput.removeAttribute('disabled');
+            submitBtn.removeAttribute('disabled');
+            questionInput.placeholder = "Enter target query parameter to evaluate against the repository database...";
+            questionInput.focus();
+
+        } catch (error) {
+            console.error("❌ Document indexing loop crashed:", error);
+            uploadPrompt.innerHTML = `<span style="color:var(--color-rejected);">⚠️ <strong>Ingestion Core Fault. Verification Pipeline Failed.</strong></span>`;
+        } finally {
+            dropZone.style.pointerEvents = 'auto';
+            dropZone.style.opacity = '1';
+        }
+    }
+
+    function handleFileSelection(event) {
+        const file = event.target.files[0];
+        if (file) uploadDocument(file);
+    }
+
+    // Drag-and-drop structural styling hooks
+    const dropZone = document.getElementById('dropZone');
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); }, false);
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); }, false);
+    });
+    dropZone.addEventListener('drop', (e) => {
+        const file = e.dataTransfer.files[0];
+        if (file) uploadDocument(file);
+    });
+
+    // ⏳ STEP INDICATOR ANIMATION AUTOMATION CONTROL CONTROLLER
+    function runSequencerAnimation(stepId, latency, nextStepCallback) {
+        const stepElement = document.getElementById(stepId);
+        if (!stepElement) return;
+        
+        stepElement.className = "sequencer-step active";
+        
+        setTimeout(() => {
+            stepElement.className = "sequencer-step completed";
+            if (nextStepCallback) nextStepCallback();
+        }, latency);
+    }
+
+    // 🛡️ SUBMIT COMPUTE PIPELINE ROUTING ACTION INTERCEPTOR
+    async function submitQuery() {
+        const questionInput = document.getElementById('questionInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const resultsBox = document.getElementById('resultsBox');
+        const statusBadge = document.getElementById('statusBadge');
+        const answerBody = document.getElementById('answerBody');
+        const scoreBody = document.getElementById('scoreBody');
+        const sequencerContainer = document.getElementById('sequencerContainer');
+        const systemStamp = document.getElementById('systemStamp');
+
+        const question = questionInput.value.trim();
+        if (!question) return;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Processing...";
+        resultsBox.style.display = "none";
+        
+        // Reset sequencer ui nodes cleanly
+        document.querySelectorAll('.sequencer-step').forEach(step => step.className = "sequencer-step");
+        sequencerContainer.style.display = "flex";
+
+        // Trigger dynamic animation blocks simulating network tracking intervals
+        runSequencerAnimation("step-vector", 600, () => {
+            runSequencerAnimation("step-qdrant", 800, () => {
+                runSequencerAnimation("step-inference", 1200, () => {
+                    document.getElementById("step-guardrail").className = "sequencer-step active";
+                });
+            });
+        });
+
+        try {
+            const response = await fetch(`${HOST_GW}/api/rag/ask`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: question })
+            });
+
+            const data = await response.json();
+            
+            // Instantly resolve visual loading flags smoothly
+            document.getElementById("step-guardrail").className = "sequencer-step completed";
+            setTimeout(() => { sequencerContainer.style.display = "none"; }, 400);
+
+            resultsBox.style.display = "block";
+            systemStamp.innerText = `SYS_STAMP: MSG_SIG_NODE_${Math.floor(Math.random() * 90000 + 10000)}`;
+
+            if (response.status !== 201 && response.status !== 200) {
+                statusBadge.className = "metric-badge status-rejected";
+                statusBadge.innerHTML = "🛑 PIPELINE INFRASTRUCTURE ERROR";
+                answerBody.innerText = data.message || "An unexpected error occurred inside the gateway routing module.";
+                scoreBody.innerHTML = `Grounding Metric: <strong>0%</strong>`;
+                return;
+            }
+
+            answerBody.innerText = data.answer || "Empty text response wrapper returned.";
+            const scoreValue = (typeof data.groundingScore === 'number' && !isNaN(data.groundingScore)) ? data.groundingScore : 0;
+                
+            let matchTypePhrase = "keyword overlap tokens match";
+            if (data.status === "VERIFIED_BY_SEMANTIC_SIMILARITY") {
+                matchTypePhrase = "semantic cosine vector coordinate similarity";
+            } else if (data.status === "VERIFIED_BY_LLM_JUDGE") {
+                matchTypePhrase = "cognitive LLM deterministic judge audit evaluation";
+            }
+            scoreBody.innerHTML = `Grounding Verification Metric: <strong>${(scoreValue * 100).toFixed(0)}%</strong> via ${matchTypePhrase}.`;
+
+            // Dynamic badge categorization mapping profiles
+            if (data.status === "VERIFIED_BY_LEXICAL_MATCH") {
+                statusBadge.className = "metric-badge status-passed-lexical";
+                statusBadge.innerHTML = `✓ GATE 1: PASSED VIA LEXICAL OVERLAP MATCH`;
+            } else if (data.status === "VERIFIED_BY_SEMANTIC_SIMILARITY") {
+                statusBadge.className = "metric-badge status-passed-semantic";
+                statusBadge.innerHTML = `✓ GATE 2: PASSED VIA SEMANTIC COSINE FALLBACK`;
+            } else if (data.status === "VERIFIED_BY_LLM_JUDGE") {
+                statusBadge.className = "metric-badge status-passed-judge";
+                statusBadge.innerHTML = `⚖ GATE 3: PASSED VIA PREMIUM LLM JUDGE AUDIT`;
+            } else {
+                statusBadge.className = "metric-badge status-rejected";
+                statusBadge.innerHTML = `⚠️ INTERCEPTED BY SELF-CORRECTION GUARDRAIL`;
+            }
+
+        } catch (error) {
+            sequencerContainer.style.display = "none";
+            resultsBox.style.display = "block";
+            statusBadge.className = "metric-badge status-rejected";
+            statusBadge.innerHTML = "🚨 GATEWAY COMPLETION TIMEOUT";
+            answerBody.innerText = "Failed to communicate with the NestJS Gateway routing tier. Verify Node runtime connection hooks.";
+            scoreBody.innerHTML = "Verification Score: <strong>0%</strong> (Offline)";
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Query Pipeline";
+        }
+    }
+
+    document.getElementById('questionInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') submitQuery();
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,95 @@
+# Node / NestJS / JavaScript
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+/coverage
+/.nyc_output
+*.log
+logs/
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+.env.python
+.python-version
+.pytest_cache/
+.mypy_cache/
+.pyre/
+python_env/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.secret
+*.key
+*.pem
+secrets/
+.vault/
+
+# Local runtime data / vector storage / caches
+qdrant_storage/
+.ollama/
+uploads/
+data/
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite-wal
+*.sqlite-shm
+
+# Docker / container local overrides
+docker-compose.override.yml
+docker-compose.*.override.yml
+.docker/
+
+# IDEs / editors
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+.project
+.classpath
+.settings/
+*.sublime-workspace
+*.sublime-project
+*.code-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Runtime / temporary files
+.temp/
+.tmp/
+tmp/
+temp/
+.cache/
+pids
+*.pid
+*.pid.lock
+*.seed
+
+# Misc
+coverage/
+htmlcov/
