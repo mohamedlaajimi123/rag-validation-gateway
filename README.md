@@ -104,7 +104,7 @@ To minimize processing latency on highly repetitive, structural baseline inquiri
 
 ### Environmental Requirements
 Verify the availability of the following endpoints inside your cluster environment:
-- NestJS Gateway Service: Port 3000
+- NestJS Gateway Service: Port 3001
 - Python Inference Compute Worker: Port 5000
 - Qdrant Vector Database Server: Port 6333
 - Ollama Engine Server: Port 11434
