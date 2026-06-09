@@ -156,3 +156,15 @@ npm run test:e2e
 # Start the gateway service
 npm run start:dev
 ```
+## 5. Known Limitations and Architectural Trade-offs
+
+While this multi-gate validation pipeline successfully catches factual inconsistencies, it was built as a proof-of-concept prototype and introduces specific constraints that limit its use in large-scale production environments:
+
+### 1. Document Size Constraints
+The pipeline is currently optimized for short context spans. It cannot process documents with a massive file size or high token counts because Gate 3 relies on a local LLM instance (`llama3`) restricted to an abbreviated 1,500-character snapshot. Large files require advanced chunking strategies or long-context architectures that are outside the scope of this baseline gateway.
+
+### 2. Processing Latency Overhead
+Enforcing data reliability comes at a steep computational cost. Because queries must walk through sequential verification layers, execution times increase dramatically if a response fails the early filters and routes all the way to Gate 3. Running an independent, local LLM evaluation step synchronously in the critical path introduces significant processing delays, making it impractical for time-sensitive, real-time user applications.
+
+### 3. Dependency on Local Model Calibration
+The threshold boundaries (`0.30` for keywords and `0.40` for vector similarity) were determined empirically against a targeted 100-pair evaluation dataset. These numbers are highly dependent on the vocabulary of the current test domain and may require extensive re-calibration if deployed against unstructured documents from a different technical industry.
