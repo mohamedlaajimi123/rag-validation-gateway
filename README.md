@@ -8,6 +8,7 @@ This repository contains a NestJS gateway service connected to a Python inferenc
 
 The gateway handles incoming text queries, manages vector lookups, and applies layered validation filters before delivering the final response.
 
+<<<<<<< HEAD
 ```
 +------------------------+
 |   Inbound User Query   |
@@ -48,6 +49,66 @@ The gateway handles incoming text queries, manages vector lookups, and applies l
 |    Secure Intercept    |
 +------------------------+
 ```
+=======
+# Multi-Stage Grounding Validation for RAG
+
+This repository is an academic and portfolio project for experimentally studying whether multi-stage validation reduces unsupported claims in RAG-generated answers.
+
+The research question is:
+
+> How effectively can a multi-stage grounding validation pipeline detect unsupported claims in RAG-generated responses, and what accuracy/latency trade-offs arise from progressively stronger validation mechanisms?
+
+## Experimental Goal
+
+The implementation is organized so the same evaluation dataset can be run through each configuration and compared directly:
+
+- Baseline RAG
+- Lexical validation
+- Semantic validation
+- LLM validation
+- Claim-level validation
+
+Each run records:
+
+- Precision
+- Recall
+- F1
+- False Acceptance Rate
+- False Rejection Rate
+- Latency
+
+The repository does not fabricate benchmark numbers. Any reported metrics must come from actually running the benchmark against a dataset.
+
+## Benchmark Workflow
+
+The benchmark runner lives in the NestJS package and consumes JSONL datasets with these fields:
+
+- `id`
+- `question`
+- `context`
+- `answer`
+- `label` (`supported` or `unsupported`)
+
+Run it from the gateway package:
+
+```bash
+cd nestjs-gateway
+npm run benchmark -- --dataset evaluation/sample-eval.jsonl --output evaluation/results/sample-benchmark.json
+```
+
+The command writes a manifest, per-example predictions, and summary metrics to the output file. Use your own evaluation dataset for actual experiments.
+
+Validation mode boundaries are explicit: baseline accepts without validation, lexical uses lexical similarity only, semantic uses embedding similarity only, LLM uses the judge only after evidence sanitization, and claim mode extracts and validates claims with combined evidence signals. Claim extraction and prompt-injection sanitization are deterministic heuristics; they do not provide complete natural-language parsing or complete prompt-injection protection. Contradiction checks are also deliberately scoped heuristics, not a complete NLI system.
+
+## Repository Layout
+
+- `nestjs-gateway/` contains the RAG gateway, validation pipeline, and benchmark runner.
+- `python-ai-service/` contains the lightweight Python service used for extraction and generation.
+
+## Notes
+
+The current codebase is tuned for reproducible experiments rather than production infrastructure. If you extend it, keep the benchmark contract stable so results remain comparable across runs.
+>>>>>>> 46a9d79 (feat: add rigorous RAG validation benchmark)
 
 1. **Vectorization:** User queries are converted into text embeddings locally using Ollama (`all-minilm`).
 2. **Vector Search:** The gateway queries a Qdrant collection to retrieve the top 5 relevant document context blocks.

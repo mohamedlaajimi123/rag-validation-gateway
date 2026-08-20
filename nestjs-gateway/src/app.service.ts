@@ -37,7 +37,7 @@ interface PythonInferenceResponse {
   response?: string;
 }
 
-interface QdrantPointPayload {
+interface QdrantPointPayload extends Record<string, unknown> {
   text: string;
   sourceFile: string;
 }
@@ -90,7 +90,7 @@ export class AppService {
     this.OLLAMA_CHAT_URL = this.configService.get<string>('OLLAMA_CHAT_URL') || 'http://127.0.0.1:11434/api/chat';
 
     const qdrantUrl = this.configService.get<string>('QDRANT_URL') || 'http://127.0.0.1:6333';
-    this.qdrantClient = new QdrantClient({ url: qdrantUrl });
+    this.qdrantClient = new QdrantClient({ url: qdrantUrl, checkCompatibility: false });
 
     this.httpClient = axios.create({
       timeout: 95000, 
