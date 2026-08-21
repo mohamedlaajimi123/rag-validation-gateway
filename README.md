@@ -30,40 +30,40 @@ The system is designed around a RAG workflow:
 
 ```text
                     ┌─────────────────────┐
-                    │    User Question     │
+                    │    User Question    │
                     └──────────┬──────────┘
                                │
                                ▼
                     ┌─────────────────────┐
-                    │   NestJS Gateway     │
+                    │   NestJS Gateway    │
                     └──────────┬──────────┘
                                │
                                ▼
                     ┌─────────────────────┐
-                    │ Embedding Service    │
-                    │      (Ollama)        │
+                    │ Embedding Service   │
+                    │      (Ollama)       │
                     └──────────┬──────────┘
                                │
                                ▼
                     ┌─────────────────────┐
-                    │  Qdrant Retrieval    │
-                    │  Top-k Documents     │
+                    │  Qdrant Retrieval   │
+                    │  Top-k Documents    │
                     └──────────┬──────────┘
                                │
                                ▼
                     ┌─────────────────────┐
-                    │ Python Inference     │
-                    │      Service         │
+                    │ Python Inference    │
+                    │      Service        │
                     └──────────┬──────────┘
                                │
                                ▼
                     ┌─────────────────────┐
-                    │  Generated Answer    │
+                    │  Generated Answer   │
                     └──────────┬──────────┘
                                │
                                ▼
               ┌────────────────────────────────┐
-              │ Grounding Validation Strategies │
+              │ Grounding Validation Strategies│
               └────────────────┬───────────────┘
                                 │
           ┌────────────┬───────┼────────┬────────────┐
@@ -74,8 +74,8 @@ The system is designed around a RAG workflow:
                                 │
                                 ▼
                     ┌─────────────────────┐
-                    │  Supported /         │
-                    │  Unsupported         │
+                    │  Supported /        │
+                    │  Unsupported        │
                     └─────────────────────┘
 ```
 
